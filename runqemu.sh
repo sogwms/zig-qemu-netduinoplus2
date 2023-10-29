@@ -1,0 +1,1 @@
+source runqemu-elf.sh
