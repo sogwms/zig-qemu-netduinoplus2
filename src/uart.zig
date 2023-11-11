@@ -2,8 +2,8 @@ const chip = @import("reg/stm32f405_reg.zig");
 const reg = chip.devices.STM32F405.peripherals;
 
 // uart1 only
-pub const USART1_SR: *u32 = @ptrFromInt(0x40011000);
-pub const USART1_CR1: *u32 = @ptrFromInt(0x4001100C);
+const USART1_SR: *volatile u32 = @ptrFromInt(0x40011000);
+const USART1_CR1: *volatile u32 = @ptrFromInt(0x4001100C);
 
 pub fn init() !void {
     // Enable clock
