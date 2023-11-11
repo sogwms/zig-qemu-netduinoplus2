@@ -2,6 +2,8 @@ const chip = @import("reg/stm32f405_reg.zig");
 const reg = chip.devices.STM32F405.peripherals;
 
 // uart1 only
+pub const USART1_SR: *u32 = @ptrFromInt(0x40011000);
+pub const USART1_CR1: *u32 = @ptrFromInt(0x4001100C);
 
 pub fn init() !void {
     // Enable clock
@@ -13,9 +15,11 @@ pub fn init() !void {
     // try chip.pinmgr.pinmgr_set_pin_mux(try chip.pinid.pin_id_from_hrs("A03"), 0b0111);
 
     // Init uart (115200)
-    reg.USART1.CR1.modify(.{ .UE = 0 });
-    // reg.USART1.BRR.modify(.{ .DIV_Fraction = 12, .DIV_Mantissa = 22 });
-    reg.USART1.CR1.modify(.{ .UE = 1, .TE = 1, .RE = 1, .M = 0, .OVER8 = 0 });
+    // reg.USART1.CR1.modify(.{ .UE = 0 });
+    //// reg.USART1.BRR.modify(.{ .DIV_Fraction = 12, .DIV_Mantissa = 22 });
+    // reg.USART1.CR1.modify(.{ .UE = 1, .TE = 1, .RE = 1, .M = 0, .OVER8 = 0 });
+
+    USART1_CR1.* = USART1_CR1.* | (1 << 13) | (1 << 2);
 
     // enable uart rx interrupt
     // reg.USART1.CR1.modify(.{ .RXNEIE = 1 });
@@ -31,7 +35,8 @@ pub fn putc(c: u8) void {
 pub fn getc_block() u8 {
     const uart = reg.USART1;
 
-    while (uart.SR.read().RXNE == 0) {} // wait rx ready
+    // while (uart.SR.read().RXNE == 0) {} // wait rx ready
+    while ((USART1_SR.* & (1 << 5)) == 0) {}
     return @as(u8, @truncate(uart.DR.read().DR));
 }
 

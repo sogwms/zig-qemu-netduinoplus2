@@ -10,16 +10,6 @@ pub fn main() void {
 
     while (true) {
         putc('.');
-        delay();
-        if (getc()) |d| {
-            putc(d);
-        }
-    }
-}
-
-fn delay() void {
-    var i: u32 = 0;
-    while (i < 10000000) {
-        i += 1;
+        putc(uart.getc_block());
     }
 }
