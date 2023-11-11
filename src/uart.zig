@@ -32,7 +32,7 @@ pub fn getc_block() u8 {
     const uart = reg.USART1;
 
     while (uart.SR.read().RXNE == 0) {} // wait rx ready
-    return @as(u8, uart.DR.read().DR);
+    return @as(u8, @truncate(uart.DR.read().DR));
 }
 
 pub fn getc() ?u8 {
