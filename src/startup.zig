@@ -1,7 +1,5 @@
 const builtin = @import("std").builtin;
 const main = @import("main.zig");
-const chip = @import("reg/stm32f405_reg.zig");
-const reg = chip.devices.STM32F405.peripherals;
 
 const uart = @import("uart.zig");
 const putc = uart.putc;
@@ -18,21 +16,21 @@ extern var _bss_end: u32;
 export fn resetHandler() callconv(.C) void {
     // fill .bss with zeroes
     {
-        const bss_start: [*]u8 = @ptrCast(&_bss_start);
-        const bss_end: [*]u8 = @ptrCast(&_bss_end);
-        const bss_len = @intFromPtr(bss_end) - @intFromPtr(bss_start);
+        const bss_start: [*]u8 = @ptrCast([*]u8,&_bss_start);
+        const bss_end: [*]u8 = @ptrCast([*]u8,&_bss_end);
+        const bss_len = @ptrToInt(bss_end) - @ptrToInt(bss_start);
 
-        @memset(bss_start[0..bss_len], 0);
+        @memset(bss_start, 0,bss_len);
     }
 
     // load .data from flash
     {
-        const data_start: [*]u8 = @ptrCast(&_data_start);
-        const data_end: [*]u8 = @ptrCast(&_data_end);
-        const data_len = @intFromPtr(data_end) - @intFromPtr(data_start);
-        const data_src: [*]const u8 = @ptrCast(&_data_loadaddr);
+        const data_start: [*]u8 = @ptrCast([*]u8,&_data_start);
+        const data_end: [*]u8 = @ptrCast([*]u8,&_data_end);
+        const data_len = @ptrToInt(data_end) - @ptrToInt(data_start);
+        const data_src: [*]const u8 = @ptrCast([*]const u8,&_data_loadaddr);
 
-        @memcpy(data_start[0..data_len], data_src[0..data_len]);
+        @memcpy(data_start, data_src, data_len);
     }
 
     // Initialize clock, uart

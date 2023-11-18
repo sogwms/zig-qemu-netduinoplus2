@@ -5,50 +5,38 @@ pub fn build(b: *std.build.Builder) void {
     // what target to build for. Here we do not override the defaults, which
     // means any target is allowed, and the default is native. Other options
     // for restricting supported target set are available.
-    // const target = b.standardTargetOptions(.{});
-
-    const target = .{
+    const target = b.standardTargetOptions(.{ .default_target = .{
         .cpu_arch = std.Target.Cpu.Arch.thumb,
         .cpu_model = .{ .explicit = &std.Target.arm.cpu.cortex_m4 },
         .os_tag = std.Target.Os.Tag.freestanding,
         .abi = std.Target.Abi.eabi,
-    };
+    } });
 
     // Standard release options allow the person running `zig build` to select
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
-    // b.setPreferredReleaseMode(std.builtin.Mode.ReleaseSmall);
-    const optimize = b.standardOptimizeOption(.{});
+    const mode = b.standardReleaseOptions();
 
-    const elf = b.addExecutable(.{
-        .name = "zig-qemu-netduinoplus2.elf",
-        // In this case the main source file is merely a path, however, in more
-        // complicated build scripts, this could be a generated file.
-        .root_source_file = .{ .path = "src/startup.zig" },
-        .target = target,
-        .optimize = optimize,
-    });
+    const exe = b.addExecutable("zig-qemu-netduinoplus2.elf", "src/startup.zig");
+    exe.setTarget(target);
+    exe.setBuildMode(mode);
+    exe.install();
 
-    // startup
-    elf.addAssemblyFile(.{ .path = "src/startup/startup.s" });
-    elf.setLinkerScriptPath(.{ .path = "src/startup/link.ld" });
+    exe.addAssemblyFile("src/startup/startup.s");
+    exe.setLinkerScriptPath(.{ .path = "src/startup/link.ld" });
 
-    // // add main namespace to startup
-    // const main_module = b.createModule(.{
-    //     .source_file = .{ .path = "src/main.zig" },
-    // });
-    // elf.addModule("main", main_module);
-    // // add reg namespace to startup
-    // const reg_module = b.createModule(.{
-    //     .source_file = .{ .path = "src/reg/stm32f405_reg.zig.zig" },
-    // });
-    // elf.addModule("reg", reg_module);
+    const run_cmd = exe.run();
+    run_cmd.step.dependOn(b.getInstallStep());
+    if (b.args) |args| {
+        run_cmd.addArgs(args);
+    }
 
-    // BIN STEP
-    const _bin = elf.addObjCopy(.{ .format = .bin });
-    const bin = b.addInstallBinFile(_bin.getOutputSource(), "zig-program.bin");
-    b.getInstallStep().dependOn(&bin.step);
+    const run_step = b.step("run", "Run the app");
+    run_step.dependOn(&run_cmd.step);
 
-    // .
-    b.installArtifact(elf);
-    b.getInstallStep().dependOn(&bin.step);
+    const exe_tests = b.addTest("src/main.zig");
+    exe_tests.setTarget(target);
+    exe_tests.setBuildMode(mode);
+
+    const test_step = b.step("test", "Run unit tests");
+    test_step.dependOn(&exe_tests.step);
 }
