@@ -1,6 +1,6 @@
 ## Environement
 
-- zig@0.11.0
+- zig@0.10.1
 - qemu@8.0.0
 - git-bash (needed on windows)
 
