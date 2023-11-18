@@ -4,6 +4,7 @@ const reg = chip.devices.STM32F405.peripherals;
 // uart1 only
 const USART1_SR: *volatile u32 = @ptrFromInt(0x40011000);
 const USART1_CR1: *volatile u32 = @ptrFromInt(0x4001100C);
+const USART1_DR: *volatile u32 = @ptrFromInt( 0x40011004);
 
 pub fn init() !void {
     // Enable clock
@@ -26,18 +27,17 @@ pub fn init() !void {
 }
 
 pub fn putc(c: u8) void {
-    const uart = reg.USART1;
+    // const uart = reg.USART1;
 
-    while (uart.SR.read().TXE == 0) {} // wait last transmit done
-    uart.DR.write_raw(c);
+    // while (uart.SR.read().TXE == 0) {} // wait last transmit done
+    // uart.DR.write_raw(c);
+    USART1_DR.* = c;
 }
 
 pub fn getc_block() u8 {
-    const uart = reg.USART1;
-
-    // while (uart.SR.read().RXNE == 0) {} // wait rx ready
+    // wait rx ready
     while ((USART1_SR.* & (1 << 5)) == 0) {}
-    return @as(u8, @truncate(uart.DR.read().DR));
+    return @as(u8, @truncate(USART1_DR.*));
 }
 
 pub fn getc() ?u8 {
